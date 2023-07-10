@@ -2,7 +2,7 @@ use std::fs::read_to_string;
 
 use serde::Deserialize;
 
-pub static CONFIG_FILE_NAME: &str = "Lnkr.yaml";
+pub static CONFIG_FILE_NAME: &str = "lnkr.yaml";
 
 #[derive(Deserialize)]
 pub struct Config {

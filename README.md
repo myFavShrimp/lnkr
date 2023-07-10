@@ -4,15 +4,15 @@
 
 ## Configuration
 
-lnkr uses a configuration file to define the symlinks. Here's an example configuration:
+lnkr uses a configuration file to define the symlinks. Here's an example configuration from a `lnkr.toml`:
 
 ```yaml
 links:
   - os: [linux]
-    destination: /var/home/denis/Development/self/lnkr
+    destination: ~/.config
     items:
-      - name: test
-        path: /var/home/denis/Development/self/lnkr/target/debug/lnkr
+      - name: helix
+        path: ./helix
         force: true
 ```
 
