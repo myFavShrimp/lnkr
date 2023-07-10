@@ -2,6 +2,13 @@
 
 `lnkr` is a powerful tool that allows you to symlink files and directories based on a simple configuration file. Say goodbye to manually creating symbolic links and let `lnkr` handle it for you!
 
+## Installation
+To install lnkr, use the following command:
+
+```bash
+cargo install lnkr
+```
+
 ## Configuration
 
 lnkr uses a configuration file to define the symlinks. Here's an example configuration from a `lnkr.toml`:
