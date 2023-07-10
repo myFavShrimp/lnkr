@@ -2,6 +2,13 @@
 name = "lnkr"
 version = "0.1.0"
 edition = "2021"
+description = "Linking stuff based on a config file"
+readme = "README.md"
+license = "MIT"
+authors = ["myFavShrimp <myfavshrimp@tuta.io>"]
+repository = "https://github.com/myFavShrimp/lnkr"
+keywords = ["link", "symlink", "management", "dotfiles"]
+categories = ["command-line-utilities", "config", "filesystem"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
