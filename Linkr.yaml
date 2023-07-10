@@ -1,0 +1,7 @@
+links:
+  - os: [linux]
+    destination: /var/home/denis/Development/self/lnkr
+    items:
+      - name: test
+        path: /var/home/denis/Development/self/lnkr/target/debug/lnkr
+        force: true

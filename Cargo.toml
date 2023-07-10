@@ -1,0 +1,16 @@
+[package]
+name = "lnkr"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+directories = "5.0.1"
+eyre = "0.6.8"
+serde_yaml = "0.9"
+thiserror = "1.0.41"
+
+[dependencies.serde]
+version = "1.0"
+features = ["derive"]
