@@ -76,7 +76,7 @@ fn symlink(item: LinkToCreate) -> LinkResult {
         }
     }
 
-    if item.force {
+    if item.force && item.to.exists() {
         if let Err(e) = remove_file(&item.to) {
             return LinkResult::Failure {
                 item,
