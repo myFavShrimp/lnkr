@@ -1,4 +1,4 @@
-use std::fs::remove_file;
+use std::fs::{canonicalize, remove_file};
 
 use crate::{config::Config, home_dir::expand_tilde};
 
@@ -6,6 +6,16 @@ pub struct LinkToCreate {
     from: std::path::PathBuf,
     to: std::path::PathBuf,
     force: bool,
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum LinkError {
+    #[error("An item already exists at the link location.")]
+    AlreadyExists,
+    #[error("The destination directory does not exist.")]
+    ParentNotExistent,
+    #[error("{0}")]
+    IoError(std::io::Error),
 }
 
 pub enum LinkResult {
@@ -37,16 +47,14 @@ impl ToString for LinkResult {
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum LinkError {
-    #[error("An item already exists at the link location.")]
-    AlreadyExists,
-    #[error("The destination directory does not exist.")]
-    ParentNotExistent,
+pub enum LinkPreparationError {
     #[error("{0}")]
-    IoError(std::io::Error),
+    IoError(#[from] std::io::Error),
+    #[error("{0}")]
+    HomeDirError(#[from] crate::home_dir::HomeDirError),
 }
 
-pub fn symlink_by_config(config: Config) -> Result<Vec<LinkResult>, crate::home_dir::HomeDirError> {
+pub fn symlink_by_config(config: Config) -> Result<Vec<LinkResult>, LinkPreparationError> {
     let links_to_create = retrieve_links_to_create(config)?;
 
     Ok(links_to_create.into_iter().map(symlink).collect())
@@ -86,9 +94,7 @@ fn symlink(item: LinkToCreate) -> LinkResult {
     }
 }
 
-fn retrieve_links_to_create(
-    config: Config,
-) -> Result<Vec<LinkToCreate>, crate::home_dir::HomeDirError> {
+fn retrieve_links_to_create(config: Config) -> Result<Vec<LinkToCreate>, LinkPreparationError> {
     let current_os = String::from(std::env::consts::OS);
 
     let mut links_to_create = Vec::new();
@@ -122,13 +128,13 @@ impl From<(std::path::PathBuf, crate::config::Link)> for LinkToCreate {
 }
 
 impl TryFrom<crate::config::LinkGroup> for Vec<LinkToCreate> {
-    type Error = crate::home_dir::HomeDirError;
+    type Error = LinkPreparationError;
 
     fn try_from(value: crate::config::LinkGroup) -> Result<Self, Self::Error> {
         let mut result = Vec::new();
-        let destination_path = expand_tilde(value.destination)?;
+        let destination_path = canonicalize(expand_tilde(value.destination)?)?;
         for mut item in value.items {
-            item.path = expand_tilde(item.path)?;
+            item.path = canonicalize(expand_tilde(item.path)?)?;
             result.push((destination_path.clone(), item).into())
         }
 
