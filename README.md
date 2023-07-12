@@ -25,7 +25,7 @@ links:
 
 In the above example, we have a symlink configuration for Linux. The destination specifies where the symlink should be created, and the items array contains the individual symlinks to be created. Each item has a `name` and a `path`. The optional `force` parameter can be set to true to overwrite existing files or directories.
 
-lnkr will only create symlinks whose link groups' `os` key matches the current operating system. For example, you have a link group with os `[linux, windows]` and your current operating system is Linux lnkr will create the symlinks specified within that group.
+lnkr will only create symlinks whose link groups' `os` key matches the current operating system. For example, if you have a link group with os `[linux, macos]` and your current operating system is Linux, lnkr will create the symlinks specified within that group.
 
 You can specify the target operating system by using one or more of the following values in the os field:
 - linux
@@ -39,7 +39,7 @@ You can specify the target operating system by using one or more of the followin
 - android
 - windows
 
-Symlinks will be created by the folloing logic:
+Symlinks will be created by the following logic:
 
 ```
 <destination>/<name> -> <path>
