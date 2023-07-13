@@ -1,6 +1,6 @@
 [package]
 name = "lnkr"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "Linking stuff based on a config file"
 readme = "README.md"
