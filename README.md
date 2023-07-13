@@ -11,7 +11,7 @@ cargo install lnkr
 
 ## Configuration
 
-lnkr uses a configuration file to define the symlinks. Here's an example configuration from a `lnkr.toml`:
+lnkr uses a configuration file to define the symlinks. Here's an example configuration from a `lnkr.yaml`:
 
 ```yaml
 links:
@@ -49,7 +49,7 @@ Symlinks will be created by the following logic:
 
 To symlink your files and directories using lnkr, follow these steps:
 
-1. Open your terminal and navigate to the lnkr project directory.
+1. Open your terminal and navigate to the directory containing your `lnkr.yaml`.
 
 2. Run the following command:
 
