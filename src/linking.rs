@@ -1,4 +1,7 @@
-use std::fs::{canonicalize, remove_file};
+use std::{
+    fs::{canonicalize, read_link, remove_file},
+    path::PathBuf,
+};
 
 use crate::{config::Config, home_dir::expand_tilde};
 
@@ -18,9 +21,24 @@ pub enum LinkError {
     IoError(std::io::Error),
 }
 
+pub enum LinkingSuccessState {
+    Linked,
+    AlreadyLinked,
+}
+
+impl LinkingSuccessState {
+    pub fn message(&self) -> &'static str {
+        match self {
+            LinkingSuccessState::Linked => "Successfully linked.",
+            LinkingSuccessState::AlreadyLinked => "Already linked.",
+        }
+    }
+}
+
 pub enum LinkResult {
     Success {
         item: LinkToCreate,
+        state: LinkingSuccessState,
     },
     Failure {
         item: LinkToCreate,
@@ -31,8 +49,13 @@ pub enum LinkResult {
 impl ToString for LinkResult {
     fn to_string(&self) -> String {
         match self {
-            LinkResult::Success { item } => {
-                format!("✅ {} -> {}", item.from.display(), item.to.display())
+            LinkResult::Success { item, state } => {
+                format!(
+                    "✅ {} -> {}: {}",
+                    item.from.display(),
+                    item.to.display(),
+                    state.message()
+                )
             }
             LinkResult::Failure { item, error } => {
                 format!(
@@ -61,10 +84,18 @@ pub fn symlink_by_config(config: Config) -> Result<Vec<LinkResult>, LinkPreparat
 }
 
 fn symlink(item: LinkToCreate) -> LinkResult {
-    if item.to.exists() && !item.force {
-        return LinkResult::Failure {
-            item,
-            error: LinkError::AlreadyExists,
+    if item.to.exists() {
+        if item.to.is_symlink() && read_link(&item.to).unwrap_or(PathBuf::new()) == item.from {
+            return LinkResult::Success {
+                item,
+                state: LinkingSuccessState::AlreadyLinked,
+            };
+        }
+        if !item.force {
+            return LinkResult::Failure {
+                item,
+                error: LinkError::AlreadyExists,
+            };
         };
     }
     if let Some(parent_path) = item.to.parent() {
@@ -86,7 +117,10 @@ fn symlink(item: LinkToCreate) -> LinkResult {
     }
 
     match std::os::unix::fs::symlink(&item.from, &item.to) {
-        Ok(_) => LinkResult::Success { item },
+        Ok(_) => LinkResult::Success {
+            item,
+            state: LinkingSuccessState::Linked,
+        },
         Err(e) => LinkResult::Failure {
             item,
             error: LinkError::IoError(e),
