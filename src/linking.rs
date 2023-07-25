@@ -1,5 +1,5 @@
 use std::{
-    fs::{canonicalize, read_link, remove_file},
+    fs::{canonicalize, create_dir_all, read_link, remove_file},
     path::PathBuf,
 };
 
@@ -15,10 +15,12 @@ pub struct LinkToCreate {
 pub enum LinkError {
     #[error("An item already exists at the link location.")]
     AlreadyExists,
-    #[error("The destination directory does not exist.")]
-    ParentNotExistent,
+    #[error("Could not create the destination directory - {0}")]
+    DestinationCreationError(std::io::Error),
     #[error("{0}")]
     IoError(std::io::Error),
+    #[error("The 'from' path has an error - {0}")]
+    FromPathError(std::io::Error),
 }
 
 pub enum LinkingSuccessState {
@@ -84,8 +86,17 @@ pub fn symlink_by_config(config: Config) -> Result<Vec<LinkResult>, LinkPreparat
 }
 
 fn symlink(item: LinkToCreate) -> LinkResult {
+    let from_path = match canonicalize(item.from.clone()) {
+        Ok(path) => path,
+        Err(e) => {
+            return LinkResult::Failure {
+                item,
+                error: LinkError::FromPathError(e),
+            }
+        }
+    };
     if item.to.exists() {
-        if item.to.is_symlink() && read_link(&item.to).unwrap_or(PathBuf::new()) == item.from {
+        if item.to.is_symlink() && read_link(&item.to).unwrap_or(PathBuf::new()) == from_path {
             return LinkResult::Success {
                 item,
                 state: LinkingSuccessState::AlreadyLinked,
@@ -100,10 +111,12 @@ fn symlink(item: LinkToCreate) -> LinkResult {
     }
     if let Some(parent_path) = item.to.parent() {
         if !parent_path.exists() {
-            return LinkResult::Failure {
-                item,
-                error: LinkError::ParentNotExistent,
-            };
+            if let Err(e) = create_dir_all(parent_path) {
+                return LinkResult::Failure {
+                    item,
+                    error: LinkError::DestinationCreationError(e),
+                };
+            }
         }
     }
 
@@ -116,7 +129,7 @@ fn symlink(item: LinkToCreate) -> LinkResult {
         }
     }
 
-    match std::os::unix::fs::symlink(&item.from, &item.to) {
+    match std::os::unix::fs::symlink(&from_path, &item.to) {
         Ok(_) => LinkResult::Success {
             item,
             state: LinkingSuccessState::Linked,
@@ -166,9 +179,9 @@ impl TryFrom<crate::config::LinkGroup> for Vec<LinkToCreate> {
 
     fn try_from(value: crate::config::LinkGroup) -> Result<Self, Self::Error> {
         let mut result = Vec::new();
-        let destination_path = canonicalize(expand_tilde(value.destination)?)?;
+        let destination_path = expand_tilde(value.destination)?;
         for mut item in value.items {
-            item.path = canonicalize(expand_tilde(item.path)?)?;
+            item.path = expand_tilde(item.path)?;
             result.push((destination_path.clone(), item).into())
         }
 
